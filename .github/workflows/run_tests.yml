@@ -1,0 +1,32 @@
+name: moto-integration-tests
+on: push
+jobs:
+  example-job:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Moto
+        uses: actions/checkout@v2
+        with:
+          repository: getmoto/moto
+          path: moto
+      - name: Install dependencies
+        run: |
+          pip install pytest requests dill
+          cd moto && make init
+          cp ../conftest.py tests
+      - name: Start LocalStack
+        env:
+          LOCALSTACK_API_KEY: ${{ secrets.LOCALSTACK_API_KEY }}
+        run: |
+          pip install localstack awscli-local[ver1] # install LocalStack cli and awslocal
+          docker pull localstack/localstack         # Make sure to pull the latest version of the image
+          localstack start -d                       # Start LocalStack in the background
+          
+          echo "Waiting for LocalStack startup..."  # Wait 30 seconds for the LocalStack container
+          localstack wait -t 30                     # to become ready before timing out 
+          echo "Startup complete"          
+      - name: Run Moto Integration Tests against LocalStack
+        run: |
+          cd moto
+          python -m pytest --capture=no --junitxml=target/reports/pytest.xml  ./tests 
+

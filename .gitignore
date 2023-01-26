@@ -1,6 +1,9 @@
 # ignore checked out moto repo
 moto/
 
+# ignore pycharm cache
+.idea/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
