@@ -11,7 +11,9 @@ jobs:
           path: moto
       - name: Install dependencies
         run: |
-          pip install pytest requests dill
+          python -m venv .venv
+          source .venv/bin/activate
+          pip install pytest requests
           cd moto && make init
           cp ../conftest.py tests
       - name: Start LocalStack
@@ -27,6 +29,6 @@ jobs:
           echo "Startup complete"          
       - name: Run Moto Integration Tests against LocalStack
         run: |
-          cd moto
-          python -m pytest --capture=no --junitxml=target/reports/pytest.xml  ./tests 
+          source .venv/bin/activate
+          python -m pytest --capture=no --junitxml=target/reports/pytest.xml  moto/tests 
 
