@@ -15,7 +15,7 @@ jobs:
           source .venv/bin/activate
           pip install pytest requests
           cd moto && make init
-          cp ../conftest.py tests
+          cp conftest.py moto/tests
       - name: Start LocalStack
         env:
           LOCALSTACK_API_KEY: ${{ secrets.LOCALSTACK_API_KEY }}
