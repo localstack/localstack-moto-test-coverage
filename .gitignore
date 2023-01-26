@@ -1,3 +1,6 @@
+# ignore checked out moto repo
+moto/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
