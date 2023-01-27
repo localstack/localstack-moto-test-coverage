@@ -4,6 +4,8 @@ jobs:
   example-job:
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v2
       - name: Checkout Moto
         uses: actions/checkout@v2
         with:
