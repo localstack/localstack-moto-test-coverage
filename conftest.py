@@ -100,7 +100,7 @@ def pytest_collection_modifyitems(items, config):
     available_services = ['ec2', 'es', 'events', 'firehose', 'iam', 'kinesis', 'kms', 'lambda', 'logs', 'opensearch', 'redshift', 'resource-groups', 'resourcegroupstaggingapi', 'route53', 'route53resolver']  # just for initial testing in CI
     # 'acm', 'apigateway', 'cloudformation', 'cloudwatch', 'config', 'dynamodb', 'dynamodbstreams'
     # 's3', 's3control', 'secretsmanager', 'ses', 'sns', 'sqs', 'ssm', 'stepfunctions', 'sts', 'support', 'swf', 'transcribe', 'amplify', 'apigatewaymanagementapi', 'apigatewayv2', 'appconfig', 'application-autoscaling', 'appsync', 'athena', 'autoscaling', 'azure', 'backup', 'batch', 'ce', 'cloudfront', 'cloudtrail', 'codecommit', 'cognito-identity', 'cognito-idp', 'docdb', 'ecr', 'ecs', 'efs', 'eks', 'elasticache', 'elasticbeanstalk', 'elb', 'elbv2', 'emr', 'fis', 'glacier', 'glue', 'iot-data', 'iot', 'iotanalytics', 'iotwireless', 'kafka', 'kinesisanalytics', 'kinesisanalyticsv2', 'lakeformation', 'mediastore-data', 'mediastore', 'mq', 'mwaa', 'neptune', 'organizations', 'qldb-session', 'qldb', 'rds-data', 'rds', 'redshift-data', 'sagemaker-runtime', 'sagemaker', 'serverlessrepo', 'servicediscovery', 'sesv2', 'timestream-query', 'timestream-write', 'transfer', 'xray'
-    excluded_services = ["acmpca"]
+    excluded_services = ["acmpca", "eks"] # TODO excluding EKS because it requires a lot of resources
     for item in items:
         item.add_marker(pytest.mark.timeout(5*60))
         for service in available_services:
