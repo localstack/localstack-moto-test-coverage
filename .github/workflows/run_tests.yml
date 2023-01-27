@@ -1,7 +1,7 @@
 name: moto-integration-tests
 on: push
 jobs:
-  example-job:
+  run-moto-tests:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repo
@@ -17,6 +17,8 @@ jobs:
           source .venv/bin/activate
           pip install pytest requests
           cd moto && make init
+      - name: Copy conftest.py
+        run: |
           cp conftest.py moto/tests
       - name: Start LocalStack
         env:
