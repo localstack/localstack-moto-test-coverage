@@ -34,5 +34,12 @@ jobs:
       - name: Run Moto Integration Tests against LocalStack
         run: |
           source .venv/bin/activate
-          python -m pytest --capture=no --junitxml=target/reports/pytest.xml moto/tests
+          python -m pytest --durations=10 --capture=no --junitxml=target/reports/pytest.xml moto/tests
+      - name: Archive Test Result
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: pytest-result.xml
+          path: target/reports/pytest.xml
+
 

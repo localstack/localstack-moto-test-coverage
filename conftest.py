@@ -1,8 +1,8 @@
-import json
 import os
 from typing import Iterator
 from unittest.mock import patch
-import dill as dill
+import boto3 as boto3
+from botocore.config import Config
 import pytest as pytest
 import requests as requests
 
@@ -18,13 +18,20 @@ os.environ["MOTO_CALL_RESET_API"] = 'false'
 settings.TEST_SERVER_MODE = True
 
 # TODO could also use fixture to override endpoint_url
-# @pytest.fixture(scope="session", autouse=True)
-# def default_localstack_client_fixture() -> Iterator[None]:
-#     def localstack_client(*args, org=boto3.client, **kwargs):
-#         kwargs["endpoint_url"] = 'http://localhost:4566'
-#         return org(*args, **kwargs)
-#     with patch("boto3.client", side_effect=localstack_client):
-#         yield
+@pytest.fixture(scope="session", autouse=True)
+def default_localstack_client_config_fixture() -> Iterator[None]:
+    def localstack_client(*args, org=boto3.client, **kwargs):
+        #kwargs["endpoint_url"] = 'http://localhost:4566'
+        config: Config = kwargs.get("config")
+        max_retry_config = Config(
+            retries={"max_attempts": 1, "total_max_attempts": 2})
+        if config:
+            config.merge(max_retry_config)
+        else:
+            kwargs["config"] = max_retry_config
+        return org(*args, **kwargs)
+    with patch("boto3.client", side_effect=localstack_client):
+        yield
 
 @pytest.fixture(scope="session", autouse=True)
 def default_localstack_client_fixture() -> Iterator[None]:
@@ -90,9 +97,9 @@ def pytest_collection_modifyitems(items, config):
 
     # response = requests.get("http://localhost:4566/_localstack/health").content.decode("utf-8")
     # available_services = [k for k in json.loads(response).get("services").keys()]
-    available_services = ['acm', 'apigateway', 'cloudformation', 'cloudwatch', 'config', 'dynamodb',
-                          'dynamodbstreams']  # just for initial testing in CI
-    # 'ec2', 'es', 'events', 'firehose', 'iam', 'kinesis', 'kms', 'lambda', 'logs', 'opensearch', 'redshift', 'resource-groups', 'resourcegroupstaggingapi', 'route53', 'route53resolver', 's3', 's3control', 'secretsmanager', 'ses', 'sns', 'sqs', 'ssm', 'stepfunctions', 'sts', 'support', 'swf', 'transcribe', 'amplify', 'apigatewaymanagementapi', 'apigatewayv2', 'appconfig', 'application-autoscaling', 'appsync', 'athena', 'autoscaling', 'azure', 'backup', 'batch', 'ce', 'cloudfront', 'cloudtrail', 'codecommit', 'cognito-identity', 'cognito-idp', 'docdb', 'ecr', 'ecs', 'efs', 'eks', 'elasticache', 'elasticbeanstalk', 'elb', 'elbv2', 'emr', 'fis', 'glacier', 'glue', 'iot-data', 'iot', 'iotanalytics', 'iotwireless', 'kafka', 'kinesisanalytics', 'kinesisanalyticsv2', 'lakeformation', 'mediastore-data', 'mediastore', 'mq', 'mwaa', 'neptune', 'organizations', 'qldb-session', 'qldb', 'rds-data', 'rds', 'redshift-data', 'sagemaker-runtime', 'sagemaker', 'serverlessrepo', 'servicediscovery', 'sesv2', 'timestream-query', 'timestream-write', 'transfer', 'xray'
+    available_services = ['ec2', 'es', 'events', 'firehose', 'iam', 'kinesis', 'kms', 'lambda', 'logs', 'opensearch', 'redshift', 'resource-groups', 'resourcegroupstaggingapi', 'route53', 'route53resolver']  # just for initial testing in CI
+    # 'acm', 'apigateway', 'cloudformation', 'cloudwatch', 'config', 'dynamodb', 'dynamodbstreams'
+    # 's3', 's3control', 'secretsmanager', 'ses', 'sns', 'sqs', 'ssm', 'stepfunctions', 'sts', 'support', 'swf', 'transcribe', 'amplify', 'apigatewaymanagementapi', 'apigatewayv2', 'appconfig', 'application-autoscaling', 'appsync', 'athena', 'autoscaling', 'azure', 'backup', 'batch', 'ce', 'cloudfront', 'cloudtrail', 'codecommit', 'cognito-identity', 'cognito-idp', 'docdb', 'ecr', 'ecs', 'efs', 'eks', 'elasticache', 'elasticbeanstalk', 'elb', 'elbv2', 'emr', 'fis', 'glacier', 'glue', 'iot-data', 'iot', 'iotanalytics', 'iotwireless', 'kafka', 'kinesisanalytics', 'kinesisanalyticsv2', 'lakeformation', 'mediastore-data', 'mediastore', 'mq', 'mwaa', 'neptune', 'organizations', 'qldb-session', 'qldb', 'rds-data', 'rds', 'redshift-data', 'sagemaker-runtime', 'sagemaker', 'serverlessrepo', 'servicediscovery', 'sesv2', 'timestream-query', 'timestream-write', 'transfer', 'xray'
     excluded_services = ["acmpca"]
     for item in items:
         item.add_marker(pytest.mark.timeout(5*60))
