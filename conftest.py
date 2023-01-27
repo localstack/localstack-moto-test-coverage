@@ -88,9 +88,11 @@ def pytest_collection_modifyitems(items, config):
     selected_items = []
     deselected_items = []
 
-    #response = requests.get("http://localhost:4566/_localstack/health").content.decode("utf-8")
-    #available_services = [k for k in json.loads(response).get("services").keys()]
-    available_services = ["acm"] # just for initial testing in CI
+    # response = requests.get("http://localhost:4566/_localstack/health").content.decode("utf-8")
+    # available_services = [k for k in json.loads(response).get("services").keys()]
+    available_services = ['acm', 'apigateway', 'cloudformation', 'cloudwatch', 'config', 'dynamodb',
+                          'dynamodbstreams']  # just for initial testing in CI
+    # 'ec2', 'es', 'events', 'firehose', 'iam', 'kinesis', 'kms', 'lambda', 'logs', 'opensearch', 'redshift', 'resource-groups', 'resourcegroupstaggingapi', 'route53', 'route53resolver', 's3', 's3control', 'secretsmanager', 'ses', 'sns', 'sqs', 'ssm', 'stepfunctions', 'sts', 'support', 'swf', 'transcribe', 'amplify', 'apigatewaymanagementapi', 'apigatewayv2', 'appconfig', 'application-autoscaling', 'appsync', 'athena', 'autoscaling', 'azure', 'backup', 'batch', 'ce', 'cloudfront', 'cloudtrail', 'codecommit', 'cognito-identity', 'cognito-idp', 'docdb', 'ecr', 'ecs', 'efs', 'eks', 'elasticache', 'elasticbeanstalk', 'elb', 'elbv2', 'emr', 'fis', 'glacier', 'glue', 'iot-data', 'iot', 'iotanalytics', 'iotwireless', 'kafka', 'kinesisanalytics', 'kinesisanalyticsv2', 'lakeformation', 'mediastore-data', 'mediastore', 'mq', 'mwaa', 'neptune', 'organizations', 'qldb-session', 'qldb', 'rds-data', 'rds', 'redshift-data', 'sagemaker-runtime', 'sagemaker', 'serverlessrepo', 'servicediscovery', 'sesv2', 'timestream-query', 'timestream-write', 'transfer', 'xray'
     excluded_services = ["acmpca"]
     for item in items:
         item.add_marker(pytest.mark.timeout(5*60))

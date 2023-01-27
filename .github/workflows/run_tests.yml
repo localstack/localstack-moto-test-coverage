@@ -34,5 +34,5 @@ jobs:
       - name: Run Moto Integration Tests against LocalStack
         run: |
           source .venv/bin/activate
-          python -m pytest --capture=no --junitxml=target/reports/pytest.xml  moto/tests 
+          python -m pytest --capture=no --junitxml=target/reports/pytest.xml moto/tests
 
