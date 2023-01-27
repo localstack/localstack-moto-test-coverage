@@ -25,7 +25,7 @@ jobs:
           LOCALSTACK_API_KEY: ${{ secrets.LOCALSTACK_API_KEY }}
         run: |
           pip install localstack awscli-local[ver1] # install LocalStack cli and awslocal
-          docker pull localstack/localstack         # Make sure to pull the latest version of the image
+          docker pull localstack/localstack-pro     # Make sure to pull the latest version of the image
           localstack start -d                       # Start LocalStack in the background
           
           echo "Waiting for LocalStack startup..."  # Wait 30 seconds for the LocalStack container
