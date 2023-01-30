@@ -15,23 +15,25 @@ jobs:
         run: |
           python -m venv .venv
           source .venv/bin/activate
-          pip install pytest requests
+          pip install pytest requests docker
           cd moto && make init
       - name: Copy conftest.py
         run: |
           cp conftest.py moto/tests
-      - name: Start LocalStack
-        env:
-          LOCALSTACK_API_KEY: ${{ secrets.LOCALSTACK_API_KEY }}
-          DNS_ADDRESS: 127.0.0.1
-        run: |
-          pip install localstack awscli-local[ver1] # install LocalStack cli and awslocal
-          docker pull localstack/localstack-pro     # Make sure to pull the latest version of the image
-          localstack start -d                       # Start LocalStack in the background
-          echo "Waiting for LocalStack startup..."  # Wait 30 seconds for the LocalStack container
-          localstack wait -t 30                     # to become ready before timing out 
-          echo "Startup complete"          
+#      - name: Start LocalStack
+#        env:
+#          LOCALSTACK_API_KEY: ${{ secrets.LOCALSTACK_API_KEY }}
+#          DNS_ADDRESS: 127.0.0.1
+#        run: |
+#          pip install localstack awscli-local[ver1] # install LocalStack cli and awslocal
+#          docker pull localstack/localstack-pro     # Make sure to pull the latest version of the image
+#          localstack start -d                       # Start LocalStack in the background
+#          echo "Waiting for LocalStack startup..."  # Wait 30 seconds for the LocalStack container
+#          localstack wait -t 30                     # to become ready before timing out
+#          echo "Startup complete"
       - name: Run Moto Integration Tests against LocalStack
+        env:
+           LOCALSTACK_API_KEY: ${{ secrets.LOCALSTACK_API_KEY }}
         run: |
           source .venv/bin/activate
           python -m pytest --durations=10 --capture=no --junitxml=target/reports/pytest.xml moto/tests

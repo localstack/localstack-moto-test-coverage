@@ -25,7 +25,7 @@ update_moto: venv
 	$(VENV_RUN); cd moto && make init
 
 install: venv checkout_moto
-	$(VENV_RUN); $(PIP_CMD) install pytest requests dill
+	$(VENV_RUN); $(PIP_CMD) install pytest requests dill docker
 
 run-tests:
 	cp conftest.py moto/tests/
