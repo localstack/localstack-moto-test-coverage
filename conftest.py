@@ -1,5 +1,7 @@
+import csv
 import json
 import os
+from pathlib import Path
 from typing import Iterator
 from unittest.mock import patch
 import boto3 as boto3
@@ -12,6 +14,10 @@ from requests.adapters import HTTPAdapter, Retry
 from moto import settings
 from moto.core.models import BaseMockAWS
 from tests import DEFAULT_ACCOUNT_ID
+
+BASE_PATH = os.path.join(os.path.dirname(__file__), "../../target/reports")
+
+FNAME_RAW_DATA_CSV = os.path.join(BASE_PATH,"metric_data_raw.csv")
 
 class Test:
     container_id: str
@@ -88,6 +94,25 @@ def check_if_test_failed(request):
         # teardown may still fail, but that should be fine and can be ignored
         print("--> test failed")
 
+    else:
+        print("test succeeded")
+        node_id = request._pyfuncitem.nodeid
+        metric_response = requests.get("http://localhost:4566/metrics/raw")
+        metric_json = json.loads(metric_response.content.decode("utf-8"))
+
+        with open(FNAME_RAW_DATA_CSV, "a") as fd:
+            writer = csv.writer(fd)
+            for m in metric_json.get("metrics"):
+                m["node_id"] = node_id
+                writer.writerow(m.values())
+
+    url = "http://localhost:4566/metrics/reset"
+    r = requests.delete(
+        url,
+        timeout=90
+    )
+    assert r.status_code == 200
+
 
 # probably not required, as we will not need a switch
 # def pytest_addoption(parser):
@@ -99,6 +124,21 @@ def check_if_test_failed(request):
 #     )
 
 def _startup_localstack():
+    try:
+        _localstack_health_check()
+    except:
+        import os
+        os.system('EXTENSION_DEV_MODE=1 LOCALSTACK_API_KEY=$LOCALSTACK_API_KEY localstack start -d')
+
+        _localstack_health_check()
+
+    print("LocalStack running")
+
+def _shutdown_localstack():
+    import os
+    os.system('localstack stop')
+
+def _startup_localstack_docker():
     try:
         client = docker.from_env()
         _localstack_health_check()
@@ -112,7 +152,7 @@ def _startup_localstack():
         client.close()
 
 
-def _shutdown_localstack():
+def _shutdown_localstack_docker():
     try:
         if Test.container_id:
             client = docker.from_env()
@@ -125,15 +165,22 @@ def _shutdown_localstack():
         print("LocalStack not running")
 
 
-@pytest.fixture(scope="module", autouse=True)
+# TODO "package" doesn't seem to work, but "module" re-starts LS too often
+@pytest.fixture(scope="package", autouse=True)
 def startup_localstack():
     _startup_localstack()
     print("LocalStack is ready...")
 
     yield
 
-    #_shutdown_localstack()
+    _shutdown_localstack()
 
+@pytest.hookimpl()
+def pytest_sessionstart(session: "Session") -> None:
+    Path(BASE_PATH).mkdir(parents=True, exist_ok=True)
+    with open(FNAME_RAW_DATA_CSV, "w") as fd:
+        writer = csv.writer(fd)
+        writer.writerow(["service", "operation", "parameters", "response_code", "response_data", "exception", "origin", "node_id"])
 
 # def shutdown_localstack():
 #     print("\nStopping LocalStack...")
