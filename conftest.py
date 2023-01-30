@@ -125,13 +125,13 @@ def _shutdown_localstack():
         print("LocalStack not running")
 
 
-@pytest.fixture(scope="module", autouse=True)
+@pytest.fixture(scope="package", autouse=True)
 def startup_localstack():
-
     _startup_localstack()
-
     print("LocalStack is ready...")
+
     yield
+
     _shutdown_localstack()
 
 
@@ -186,7 +186,7 @@ def _start_docker_container(client, localstack_image):
     env_vars = []
     if os.environ.get("LOCALSTACK_API_KEY"):
         env_vars.append(f"LOCALSTACK_API_KEY={os.environ.get('LOCALSTACK_API_KEY')}")
-        print("Trying to run start LocalStack Pro")
+        print("Trying to start LocalStack Pro")
     else:
         print("No LOCALSTACK_API_KEY found, running community...")
     port_mappings = {
