@@ -196,8 +196,8 @@ def pytest_collection_modifyitems(items, config):
     deselected_items = []
     _startup_localstack()
     response = requests.get("http://localhost:4566/_localstack/health").content.decode("utf-8")
-    #available_services = [k for k in json.loads(response).get("services").keys()]
-    available_services = ['acm']
+    available_services = [k for k in json.loads(response).get("services").keys()]
+    #available_services = ['acm']
     #available_services = ['s3', 's3control', 'secretsmanager', 'ses', 'sns', 'sqs', 'ssm', 'stepfunctions', 'sts', 'support', 'swf', 'transcribe', 'amplify', 'apigatewaymanagementapi', 'apigatewayv2', 'appconfig', 'application-autoscaling', 'appsync', 'athena', 'autoscaling', 'azure', 'backup', 'batch', 'ce', 'cloudfront', 'cloudtrail', 'codecommit', 'cognito-identity', 'cognito-idp', 'docdb', 'ecr', 'ecs', 'efs', 'eks', 'elasticache', 'elasticbeanstalk', 'elb', 'elbv2', 'emr', 'fis', 'glacier', 'glue', 'iot-data', 'iot', 'iotanalytics', 'iotwireless', 'kafka', 'kinesisanalytics', 'kinesisanalyticsv2', 'lakeformation', 'mediastore-data', 'mediastore', 'mq', 'mwaa', 'neptune', 'organizations', 'qldb-session', 'qldb', 'rds-data', 'rds', 'redshift-data', 'sagemaker-runtime', 'sagemaker', 'serverlessrepo', 'servicediscovery', 'sesv2', 'timestream-query', 'timestream-write', 'transfer', 'xray']
     # ['ec2', 'es', 'events', 'firehose', 'iam', 'kinesis', 'kms', 'lambda', 'logs', 'opensearch', 'redshift', 'resource-groups', 'resourcegroupstaggingapi', 'route53', 'route53resolver']  # just for initial testing in CI
     # 'acm', 'apigateway', 'cloudformation', 'cloudwatch', 'config', 'dynamodb', 'dynamodbstreams'
