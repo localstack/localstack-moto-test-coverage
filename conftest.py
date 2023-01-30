@@ -128,7 +128,7 @@ def _startup_localstack():
         _localstack_health_check()
     except:
         import os
-        os.system('EXTENSION_DEV_MODE=1 LOCALSTACK_API_KEY=$LOCALSTACK_API_KEY localstack start -d')
+        os.system('DNS_ADDRESS=127.0.0.1 EXTENSION_DEV_MODE=1 LOCALSTACK_API_KEY=$LOCALSTACK_API_KEY localstack start -d')
 
         _localstack_health_check()
 
