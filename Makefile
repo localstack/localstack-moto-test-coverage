@@ -12,7 +12,7 @@ VENV_RUN = . $(VENV_ACTIVATE)
 
 $(VENV_ACTIVATE):
 	test -d $(VENV_DIR) || $(VENV_BIN) $(VENV_DIR)
-	$(VENV_RUN); $(PIP_CMD) install --upgrade pip setuptools wheel plux
+	$(VENV_RUN); $(PIP_CMD) install --upgrade pip
 	touch $(VENV_ACTIVATE)
 
 venv: $(VENV_ACTIVATE)    ## Create a new (empty) virtual environment
@@ -29,7 +29,7 @@ install: venv checkout_moto
 
 run-tests:
 	cp conftest.py moto/tests/
-	$(VENV_RUN); python -m pytest --capture=no --junitxml=target/reports/pytest.xml  moto/tests
+	$(VENV_RUN); python -m pytest --capture=no --junitxml=target/reports/pytest.xml  moto --tb=line
 
 clean:
 	rm -rf moto

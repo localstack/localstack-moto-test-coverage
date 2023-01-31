@@ -88,15 +88,15 @@ def check_if_test_failed(request):
     cur_failed = request.session.testsfailed
     yield
     now_failed = request.session.testsfailed
-
+    node_id = request._pyfuncitem.nodeid
     if cur_failed < now_failed:
         # do something
         # teardown may still fail, but that should be fine and can be ignored
-        print("--> test failed")
+        print(f"--> test failed: {node_id}")
 
     else:
-        print("test succeeded")
-        node_id = request._pyfuncitem.nodeid
+        print(f"test succeeded: {node_id}")
+
         metric_response = requests.get("http://localhost:4566/metrics/raw")
         metric_json = json.loads(metric_response.content.decode("utf-8"))
 
@@ -114,14 +114,12 @@ def check_if_test_failed(request):
     assert r.status_code == 200
 
 
-# probably not required, as we will not need a switch
-# def pytest_addoption(parser):
-#     group = parser.getgroup("motofallback")
-#     group.addoption(
-#         "--fallback",
-#         action="store_true",
-#         help="Run Tests with Moto Fallback for LocalStack",
-#     )
+def pytest_addoption(parser):
+    parser.addoption(
+        "--services",
+        action="store",
+        help="Comma separated list of services that should be tested",
+    )
 
 def _startup_localstack():
     try:
@@ -189,27 +187,30 @@ def pytest_sessionstart(session: "Session") -> None:
 #     client.close()
 
 def pytest_collection_modifyitems(items, config):
-    # if config.option.fallback is False:
-    #   return
+    selected_services = config.option.services.split(",") if config.option.services else None
 
     selected_items = []
     deselected_items = []
-    _startup_localstack()
-    response = requests.get("http://localhost:4566/_localstack/health").content.decode("utf-8")
-    available_services = [k for k in json.loads(response).get("services").keys()]
-    #available_services = ['acm']
-    #available_services = ['s3', 's3control', 'secretsmanager', 'ses', 'sns', 'sqs', 'ssm', 'stepfunctions', 'sts', 'support', 'swf', 'transcribe', 'amplify', 'apigatewaymanagementapi', 'apigatewayv2', 'appconfig', 'application-autoscaling', 'appsync', 'athena', 'autoscaling', 'azure', 'backup', 'batch', 'ce', 'cloudfront', 'cloudtrail', 'codecommit', 'cognito-identity', 'cognito-idp', 'docdb', 'ecr', 'ecs', 'efs', 'eks', 'elasticache', 'elasticbeanstalk', 'elb', 'elbv2', 'emr', 'fis', 'glacier', 'glue', 'iot-data', 'iot', 'iotanalytics', 'iotwireless', 'kafka', 'kinesisanalytics', 'kinesisanalyticsv2', 'lakeformation', 'mediastore-data', 'mediastore', 'mq', 'mwaa', 'neptune', 'organizations', 'qldb-session', 'qldb', 'rds-data', 'rds', 'redshift-data', 'sagemaker-runtime', 'sagemaker', 'serverlessrepo', 'servicediscovery', 'sesv2', 'timestream-query', 'timestream-write', 'transfer', 'xray']
-    # ['ec2', 'es', 'events', 'firehose', 'iam', 'kinesis', 'kms', 'lambda', 'logs', 'opensearch', 'redshift', 'resource-groups', 'resourcegroupstaggingapi', 'route53', 'route53resolver']  # just for initial testing in CI
-    # 'acm', 'apigateway', 'cloudformation', 'cloudwatch', 'config', 'dynamodb', 'dynamodbstreams'
-    # 's3', 's3control', 'secretsmanager', 'ses', 'sns', 'sqs', 'ssm', 'stepfunctions', 'sts', 'support', 'swf', 'transcribe', 'amplify', 'apigatewaymanagementapi', 'apigatewayv2', 'appconfig', 'application-autoscaling', 'appsync', 'athena', 'autoscaling', 'azure', 'backup', 'batch', 'ce', 'cloudfront', 'cloudtrail', 'codecommit', 'cognito-identity', 'cognito-idp', 'docdb', 'ecr', 'ecs', 'efs', 'eks', 'elasticache', 'elasticbeanstalk', 'elb', 'elbv2', 'emr', 'fis', 'glacier', 'glue', 'iot-data', 'iot', 'iotanalytics', 'iotwireless', 'kafka', 'kinesisanalytics', 'kinesisanalyticsv2', 'lakeformation', 'mediastore-data', 'mediastore', 'mq', 'mwaa', 'neptune', 'organizations', 'qldb-session', 'qldb', 'rds-data', 'rds', 'redshift-data', 'sagemaker-runtime', 'sagemaker', 'serverlessrepo', 'servicediscovery', 'sesv2', 'timestream-query', 'timestream-write', 'transfer', 'xray'
-    excluded_services = ["acmpca", "eks"]  # TODO excluding EKS because it requires a lot of resources
+
+    if not selected_services:
+        # no default, select all
+        _startup_localstack()
+        response = requests.get("http://localhost:4566/_localstack/health").content.decode("utf-8")
+        selected_services = [k for k in json.loads(response).get("services").keys()]
+
+    #selected_services = ['acm']
+
+    excluded_service = ["acmpca", "eks",# TODO excluding EKS because it requires a lot of resources
+                 ]
+    excluded_test_cases = ["test_rds.py::test_get_databases_paginated"] # exclude "specific test, because it creates 51 databases
     for item in items:
-        item.add_marker(pytest.mark.timeout(5 * 60))
-        for service in available_services:
+        for service in selected_services:
             if item in deselected_items or item in selected_items:
                 continue
             test_class_name = item._nodeid.split("::")[0].split("/")[-1]
-            if any([True for x in excluded_services if x in test_class_name]):
+            if any([True for x in excluded_service if x in test_class_name]):
+                deselected_items.append(item)
+            elif any([True for x in excluded_test_cases if x in item._nodeid]):
                 deselected_items.append(item)
             elif (f'test_{service}' in test_class_name or f'test_{service.replace("-", "")}' in test_class_name):
                 selected_items.append(item)
