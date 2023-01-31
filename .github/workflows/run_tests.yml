@@ -15,7 +15,7 @@ jobs:
         run: |
           python -m venv .venv
           source .venv/bin/activate
-          pip install pytest requests docker
+          pip install pytest requests
           cd moto && make init
       - name: Copy conftest.py
         run: |
