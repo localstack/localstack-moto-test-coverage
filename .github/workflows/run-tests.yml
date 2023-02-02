@@ -8,7 +8,7 @@ on:
         required: false
         type: string
         default: 'main'
-  pull_requests:
+  pull_request:
     branches:
       - main
   push:
