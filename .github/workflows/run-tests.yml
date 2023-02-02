@@ -8,6 +8,12 @@ on:
         required: false
         type: string
         default: 'main'
+  pull_requests:
+    branches:
+      - main
+  push:
+    branches:
+      - main
 jobs:
   run-moto-tests:
     runs-on: ubuntu-latest
