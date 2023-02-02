@@ -66,7 +66,6 @@ def default_cleanup_localstack_resources():
     the endpoint /_pods/state/reset
     """
     yield
-    # cleanup
     payload = {'persistence': True}  # defining no services means all services will be cleared (we don't know which interservice communication tests trigger)
     headers = {'content-type': 'application/json'}
     url = "http://localhost:4566/_pods/state/reset"
@@ -80,12 +79,15 @@ def default_cleanup_localstack_resources():
 
 @pytest.fixture(scope="function", autouse=True)
 def check_if_test_failed(request):
+    """ monitors the test status, e.g. if the test failed or not
+        if the test succeeded, write the collected metrics
+        into the raw-data-collection csv file
+    """
     cur_failed = request.session.testsfailed
     yield
     now_failed = request.session.testsfailed
     node_id = request._pyfuncitem.nodeid
     if cur_failed < now_failed:
-        # do something
         # teardown may still fail, but that should be fine and can be ignored
         print(f"--> test failed: {node_id}")
 
@@ -134,7 +136,8 @@ def _shutdown_localstack():
     os.system('localstack stop')
 
 
-# TODO "package" doesn't seem to work, but "module" re-starts LS too often
+# TODO "package" doesn't seem to work (behaves like "session"), but "module" re-starts LS too often
+#      tests run in CI now without restarting LocalStack in between
 @pytest.fixture(scope="package", autouse=True)
 def startup_localstack():
     _startup_localstack()
@@ -146,13 +149,18 @@ def startup_localstack():
 
 @pytest.hookimpl()
 def pytest_sessionstart(session: "Session") -> None:
+    """ at the beginning of the test session: create the csv file where we will append the collected raw metrics """
     Path(BASE_PATH).mkdir(parents=True, exist_ok=True)
     with open(FNAME_RAW_DATA_CSV, "w") as fd:
         writer = csv.writer(fd)
-        writer.writerow(["service", "operation", "parameters", "response_code", "response_data", "exception", "origin", "node_id"])
+        writer.writerow(["service", "operation", "parameters", "response_code", "response_data", "exception", "origin", "test_node_id"])
 
 
 def pytest_collection_modifyitems(items, config):
+    """ collects the selected tests depending on the services selected.
+    by default all services that LocalStack implement will be considered.
+    With the option "--service=acm,lambda" a subset of services can be selected
+    """
     selected_services = config.option.services.split(",") if config.option.services else None
 
     selected_items = []
@@ -164,11 +172,19 @@ def pytest_collection_modifyitems(items, config):
         response = requests.get("http://localhost:4566/_localstack/health").content.decode("utf-8")
         selected_services = [k for k in json.loads(response).get("services").keys()]
 
-    #selected_services = ['acm']
+    # TODO excluding EKS because it requires a lot of resources
+    excluded_service = ["eks"]
 
-    excluded_service = ["acmpca", "eks",# TODO excluding EKS because it requires a lot of resources
-                 ]
-    excluded_test_cases = ["test_rds.py::test_get_databases_paginated"] # exclude "specific test, because it creates 51 databases
+    # exclude "specific test, because it creates 51 databases
+    excluded_test_cases = ["test_rds.py::test_get_databases_paginated"]
+
+    # exclude other services that run a long time, but are not yet implemented in localstack
+    tmp_excluded = ["acmpca", "emr-serverless"]
+    for tmp in tmp_excluded:
+        if tmp not in selected_services:
+            excluded_service.append(tmp)
+
+    # filter tests based on pattern - e.g. every test that includes test_{service_name}
     for item in items:
         for service in selected_services:
             if item in deselected_items or item in selected_items:
@@ -178,14 +194,13 @@ def pytest_collection_modifyitems(items, config):
                 deselected_items.append(item)
             elif any([True for x in excluded_test_cases if x in item._nodeid]):
                 deselected_items.append(item)
-            elif (f'test_{service}' in test_class_name or f'test_{service.replace("-", "")}' in test_class_name):
+            elif f'test_{service}' in test_class_name or f'test_{service.replace("-", "")}' in test_class_name:
                 selected_items.append(item)
         if item not in selected_items:
             deselected_items.append(item)
 
     config.hook.pytest_deselected(items=deselected_items)
     items[:] = selected_items
-
 
 
 def _localstack_health_check():

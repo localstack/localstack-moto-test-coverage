@@ -24,9 +24,16 @@ update_moto: venv
 	cd moto && git checkout master && git fetch origin master
 	$(VENV_RUN); cd moto && make init
 
-install: venv checkout_moto
-	$(VENV_RUN); $(PIP_CMD) install pytest requests dill
-	$(VENV_RUN); $(PIP_CMD) install pytest requests dill
+init_extension: venv
+	# TODO user must be logged in already
+	pip install localstack
+	cd collect-raw-metric-data-extension && make install
+	localstack extensions init
+	localstack extensions dev enable ./collect-raw-metric-data-extension
+
+install: venv checkout_moto init_extension
+	$(VENV_RUN); $(PIP_CMD) install pytest requests
+	$(VENV_RUN); $(PIP_CMD) install pytest requests
 
 run-tests:
 	cp conftest.py moto/tests/

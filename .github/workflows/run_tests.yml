@@ -1,5 +1,6 @@
 name: moto-integration-tests
-on: push
+schedule:
+    - cron: '0 6 * * 0'
 jobs:
   run-moto-tests:
     runs-on: ubuntu-latest
@@ -28,7 +29,6 @@ jobs:
           LOCALSTACK_API_KEY: ${{ secrets.LOCALSTACK_API_KEY }}
           TMP_USER: ${{ secrets.TMP_USER }}
           TMP_PW: ${{ secrets.TMP_PW }}
-          #DNS_ADDRESS: 127.0.0.1
         run: |
           source .venv/bin/activate
           pip install localstack awscli-local[ver1] # install LocalStack cli and awslocal
@@ -36,10 +36,6 @@ jobs:
           localstack login -u $TMP_USER -p $TMP_PW
           localstack extensions init
           localstack extensions dev enable ./collect-raw-metric-data-extension
-#          localstack start -d                       # Start LocalStack in the background
-#          echo "Waiting for LocalStack startup..."  # Wait 30 seconds for the LocalStack container
-#          localstack wait -t 30                     # to become ready before timing out
-#          echo "Startup complete"
       - name: Run Moto Integration Tests against LocalStack
         env:
            LOCALSTACK_API_KEY: ${{ secrets.LOCALSTACK_API_KEY }}
