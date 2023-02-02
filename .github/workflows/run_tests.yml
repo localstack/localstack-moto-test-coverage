@@ -1,5 +1,6 @@
 name: moto-integration-tests
-schedule:
+on:
+  schedule:
     - cron: '0 6 * * 0'
 jobs:
   run-moto-tests:
