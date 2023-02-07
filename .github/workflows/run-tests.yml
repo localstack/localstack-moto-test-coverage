@@ -60,5 +60,9 @@ jobs:
         run: |
           source .venv/bin/activate
           localstack logout
-
-
+      - name: Publish Test Results
+        uses: EnricoMi/publish-unit-test-result-action@v2
+        if: always()
+        with:
+          junit_files: target/reports/*.xml
+          check_name: Moto Integration Tests against LocalStack Results
