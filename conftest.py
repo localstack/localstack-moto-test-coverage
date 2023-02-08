@@ -137,9 +137,9 @@ def _shutdown_localstack():
     os.system("localstack stop")
 
 
-# TODO "package" doesn't seem to work (behaves like "session"), but "module" re-starts LS too often
-#      tests run in CI now without restarting LocalStack in between
-@pytest.fixture(scope="package", autouse=True)
+# TODO using scope "module", because "package" did not work as expected
+#      some cleanup seem not work yet, tests timeout
+@pytest.fixture(scope="module", autouse=True)
 def startup_localstack():
     _startup_localstack()
     print("LocalStack is ready...")
