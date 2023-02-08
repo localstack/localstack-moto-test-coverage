@@ -42,7 +42,7 @@ install: venv install-dependencies init-precommit update-moto init-extension
 
 run-tests:
 	cp conftest.py moto/tests/
-	$(VENV_RUN); python -m pytest --capture=no --junitxml=target/reports/pytest.xml  moto --tb=line
+	$(VENV_RUN); python -m pytest --timeout=300 --capture=no --junitxml=target/reports/pytest.xml  moto --tb=line
 
 format:
 	($(VENV_RUN); python -m isort conftest.py; python -m black conftest.py )

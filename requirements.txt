@@ -4,3 +4,4 @@ black>=22.1
 isort>=5.10
 pre-commit>=2.21.0
 localstack
+pytest-timeout
