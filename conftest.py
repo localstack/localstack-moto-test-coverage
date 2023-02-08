@@ -105,7 +105,6 @@ def check_if_test_failed(request):
                     writer.writerow(m.values())
         except json.JSONDecodeError:
             print("could not decode metrics")
-            pass
 
     url = "http://localhost:4566/metrics/reset"
     r = requests.delete(url, timeout=90)
