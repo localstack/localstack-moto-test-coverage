@@ -65,15 +65,15 @@ def default_localstack_client_fixture() -> Iterator[None]:
 def default_cleanup_localstack_resources():
     """
     Fixture to cleanup localstack resources after each test case run
-    We do not know which interservice communication happend, so we delete all resources, by sending a request to
-    the endpoint /_pods/state/reset
+    We do not know which interservice communication happened, so we delete all resources, by sending a request to
+    the endpoint /_localstack/pods/state/reset
     """
     yield
     payload = {
         "persistence": True
     }  # defining no services means all services will be cleared (we don't know which interservice communication tests trigger)
     headers = {"content-type": "application/json"}
-    url = "http://localhost:4566/_pods/state/reset"
+    url = "http://localhost:4566/_localstack/pods/state/reset"
     requests.delete(url, json=payload, headers=headers, timeout=90)
 
 
@@ -124,7 +124,7 @@ def _startup_localstack():
         _localstack_health_check()
     except:
         os.system(
-            "DNS_ADDRESS=127.0.0.1 EXTENSION_DEV_MODE=1 LOCALSTACK_API_KEY=$LOCALSTACK_API_KEY localstack start -d"
+            "DNS_ADDRESS=127.0.0.1 EXTENSION_DEV_MODE=1 DISABLE_EVENTS=1 LOCALSTACK_API_KEY=$LOCALSTACK_API_KEY localstack start -d"
         )
 
         _localstack_health_check()
