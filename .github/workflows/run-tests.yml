@@ -1,0 +1,68 @@
+name: moto-integration-tests
+on:
+  schedule:
+    - cron: '0 6 * * 0'
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+jobs:
+  run-moto-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v3
+      - name: Checkout Moto
+        uses: actions/checkout@v3
+        with:
+          repository: getmoto/moto
+          path: moto
+      - name: Install dependencies
+        run: |
+          python -m venv .venv
+          source .venv/bin/activate
+          pip install pytest requests pytest-timeout
+          cd moto && make init
+      - name: Copy conftest.py
+        run: |
+          cp conftest.py moto/tests
+      - name: Prepare Extension
+        run: |
+          cd collect-raw-metric-data-extension && make install
+      - name: Setup LocalStack
+        env:
+          LOCALSTACK_API_KEY: ${{ secrets.LOCALSTACK_API_KEY }}
+          TMP_USER: ${{ secrets.TMP_USER }}
+          TMP_PW: ${{ secrets.TMP_PW }}
+        run: |
+          source .venv/bin/activate
+          pip install localstack awscli-local[ver1] # install LocalStack cli and awslocal
+          docker pull localstack/localstack-pro     # Make sure to pull the latest version of the image
+          localstack login -u $TMP_USER -p $TMP_PW
+          localstack extensions init
+          localstack extensions dev enable ./collect-raw-metric-data-extension
+      - name: Run Moto Integration Tests against LocalStack
+        env:
+           LOCALSTACK_API_KEY: ${{ secrets.LOCALSTACK_API_KEY }}
+        run: |
+          source .venv/bin/activate
+          python -m pytest --durations=10 --timeout=300 --capture=no --junitxml=target/reports/pytest.xml moto/tests --tb=line
+      - name: Archive Test Result
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: test-metrics
+          path: target/reports
+      - name: Logout LocalStack
+        if: always()
+        run: |
+          source .venv/bin/activate
+          localstack logout
+      - name: Publish Test Results
+        uses: EnricoMi/publish-unit-test-result-action@v2
+        if: always()
+        with:
+          junit_files: target/reports/*.xml
+          check_name: Moto Integration Tests against LocalStack Results
