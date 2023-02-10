@@ -17,7 +17,8 @@ from moto.core.models import BaseMockAWS
 
 BASE_PATH = os.path.join(os.path.dirname(__file__), "../../target/reports")
 
-FNAME_RAW_DATA_CSV = os.path.join(BASE_PATH, "metric_data_raw.csv")
+FNAME_RAW_DATA_SUCCESS_CSV = os.path.join(BASE_PATH, "metric_data_raw_success.csv")
+FNAME_RAW_DATA_FAILED_CSV = os.path.join(BASE_PATH, "metric_data_raw_failed.csv")
 
 # overriding ENVs + settings to use LocalStack as endpoint
 os.environ["TEST_SERVER_MODE_ENDPOINT"] = "http://localhost:4566"
@@ -90,22 +91,22 @@ def check_if_test_failed(request):
     if cur_failed < now_failed:
         # teardown may still fail, but that should be fine and can be ignored
         print(f"--> test failed: {node_id}")
-
+        file = FNAME_RAW_DATA_FAILED_CSV
     else:
         print(f"test succeeded: {node_id}")
+        file = FNAME_RAW_DATA_SUCCESS_CSV
 
-        metric_response = requests.get("http://localhost:4566/metrics/raw")
-        try:
-            metric_json = json.loads(metric_response.content.decode("utf-8"))
+    metric_response = requests.get("http://localhost:4566/metrics/raw")
+    try:
+        metric_json = json.loads(metric_response.content.decode("utf-8"))
 
-            with open(FNAME_RAW_DATA_CSV, "a") as fd:
-                writer = csv.writer(fd)
-                for m in metric_json.get("metrics"):
-                    m["node_id"] = node_id
-                    writer.writerow(m.values())
-        except json.JSONDecodeError:
-            print("could not decode metrics")
-
+        with open(file, "a") as fd:
+            writer = csv.writer(fd)
+            for m in metric_json.get("metrics"):
+                m["node_id"] = node_id
+                writer.writerow(m.values())
+    except json.JSONDecodeError:
+        print("could not decode metrics")
     url = "http://localhost:4566/metrics/reset"
     r = requests.delete(url, timeout=90)
     assert r.status_code == 200
@@ -152,7 +153,21 @@ def startup_localstack():
 def pytest_sessionstart(session: "Session") -> None:
     """at the beginning of the test session: create the csv file where we will append the collected raw metrics"""
     Path(BASE_PATH).mkdir(parents=True, exist_ok=True)
-    with open(FNAME_RAW_DATA_CSV, "w") as fd:
+    with open(FNAME_RAW_DATA_SUCCESS_CSV, "w") as fd:
+        writer = csv.writer(fd)
+        writer.writerow(
+            [
+                "service",
+                "operation",
+                "parameters",
+                "response_code",
+                "response_data",
+                "exception",
+                "origin",
+                "test_node_id",
+            ]
+        )
+    with open(FNAME_RAW_DATA_FAILED_CSV, "w") as fd:
         writer = csv.writer(fd)
         writer.writerow(
             [
