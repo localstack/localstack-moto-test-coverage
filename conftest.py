@@ -201,7 +201,7 @@ def pytest_collection_modifyitems(items, config):
             excluded_service.append(tmp)
 
     # ec2 does not follow the naming conventions, all classes except the following should be run:
-    excluded_ec2_test_cases = [
+    excluded_ec2_tests = [
         "test_vm_export.py",
         "test_vm_import.py",
         "test_utils.py",
@@ -212,6 +212,9 @@ def pytest_collection_modifyitems(items, config):
         "helpers.py",
         "test_amazon_dev_pay.py",
     ]
+
+    # included tests, that do not match the pattern test_{service_name}
+    included_tests = ["test_policies.py"]
     # filter tests based on pattern - e.g. every test that includes test_{service_name}
     for item in items:
         for service in selected_services:
@@ -219,19 +222,20 @@ def pytest_collection_modifyitems(items, config):
                 continue
             test_class_name = item._nodeid.split("::")[0].split("/")[-1]
             test_package_name = item._nodeid.split("/")[1]
-            if any([True for x in excluded_service if x in test_class_name]):
+            if any([x in test_class_name for x in excluded_service]):
                 deselected_items.append(item)
-            elif any([True for x in excluded_test_cases if x in item._nodeid]):
+            elif any([x in item._nodeid for x in excluded_test_cases]):
                 deselected_items.append(item)
             elif (
                 f"test_{service}" in test_class_name
-                or "test_policies" in test_class_name
                 or f'test_{service.replace("-", "")}' in test_class_name
             ):
                 selected_items.append(item)
+            elif any([x in test_class_name for x in included_tests]):
+                selected_items.append(item)
             elif "test_ec2" == test_package_name:
                 # ec2 does not follow the conventions, some testclasses have only an empty test
-                if any([True for x in excluded_ec2_test_cases if x in item._nodeid]):
+                if any([x in item._nodeid for x in excluded_ec2_tests]):
                     deselected_items.append(item)
                 else:
                     selected_items.append(item)
