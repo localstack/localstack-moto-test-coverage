@@ -34,15 +34,12 @@ jobs:
       - name: Setup LocalStack
         env:
           LOCALSTACK_API_KEY: ${{ secrets.LOCALSTACK_API_KEY }}
-          TMP_USER: ${{ secrets.TMP_USER }}
-          TMP_PW: ${{ secrets.TMP_PW }}
         run: |
           source .venv/bin/activate
-          pip install localstack awscli-local[ver1] # install LocalStack cli and awslocal
+          pip install --pre localstack
           docker pull localstack/localstack-pro     # Make sure to pull the latest version of the image
-          localstack login -u $TMP_USER -p $TMP_PW
-          localstack extensions init
-          localstack extensions dev enable ./collect-raw-metric-data-extension
+          LOCALSTACK_API_KEY=$LOCALSTACK_API_KEY localstack extensions init
+          LOCALSTACK_API_KEY=$LOCALSTACK_API_KEY localstack extensions dev enable ./collect-raw-metric-data-extension
       - name: Run Moto Integration Tests against LocalStack
         env:
            LOCALSTACK_API_KEY: ${{ secrets.LOCALSTACK_API_KEY }}
