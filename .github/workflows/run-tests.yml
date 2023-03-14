@@ -34,12 +34,15 @@ jobs:
       - name: Setup LocalStack
         env:
           LOCALSTACK_API_KEY: ${{ secrets.LOCALSTACK_API_KEY }}
+          TMP_USER: ${{ secrets.TMP_USER }}
+          TMP_PW: ${{ secrets.TMP_PW }}
         run: |
           source .venv/bin/activate
           pip install --pre localstack
           docker pull localstack/localstack-pro     # Make sure to pull the latest version of the image
-          LOCALSTACK_API_KEY=$LOCALSTACK_API_KEY localstack extensions init
-          LOCALSTACK_API_KEY=$LOCALSTACK_API_KEY localstack extensions dev enable ./collect-raw-metric-data-extension
+          localstack login -u $TMP_USER -p $TMP_PW  # login is currently required
+          localstack extensions init
+          localstack extensions dev enable ./collect-raw-metric-data-extension
       - name: Run Moto Integration Tests against LocalStack
         env:
            LOCALSTACK_API_KEY: ${{ secrets.LOCALSTACK_API_KEY }}
@@ -52,6 +55,11 @@ jobs:
         with:
           name: test-metrics
           path: target/reports
+      - name: Logout LocalStack
+        if: always()
+        run: |
+          source .venv/bin/activate
+          localstack logout
       - name: Publish Test Results
         uses: EnricoMi/publish-unit-test-result-action@v2
         if: always()
