@@ -174,7 +174,9 @@ def pytest_collection_modifyitems(items, config):
     With the option "--service=acm,lambda" a subset of services can be selected
     """
     selected_services = (
-        config.option.services.split(",") if config.option.services else None
+        config.option.services.split(",")
+        if config.option.services and config.option.services != "all"
+        else None
     )
 
     selected_items = []
@@ -187,6 +189,13 @@ def pytest_collection_modifyitems(items, config):
             "http://localhost:4566/_localstack/health"
         ).content.decode("utf-8")
         selected_services = [k for k in json.loads(response).get("services").keys()]
+        # included tests, that do not match the pattern test_{service_name}
+        included_tests = ["test_policies.py"]
+        # exclude other services that run a long time, but are not yet implemented in localstack
+        tmp_excluded = ["acmpca", "emr-serverless", "lambda"]
+    else:
+        included_tests = []
+        tmp_excluded = []
 
     # TODO excluding EKS because it requires a lot of resources
     excluded_service = ["eks"]
@@ -194,8 +203,6 @@ def pytest_collection_modifyitems(items, config):
     # exclude "specific test, because it creates 51 databases
     excluded_test_cases = ["test_rds.py::test_get_databases_paginated"]
 
-    # exclude other services that run a long time, but are not yet implemented in localstack
-    tmp_excluded = ["acmpca", "emr-serverless"]
     for tmp in tmp_excluded:
         if tmp not in selected_services:
             excluded_service.append(tmp)
@@ -213,8 +220,6 @@ def pytest_collection_modifyitems(items, config):
         "test_amazon_dev_pay.py",
     ]
 
-    # included tests, that do not match the pattern test_{service_name}
-    included_tests = ["test_policies.py"]
     # filter tests based on pattern - e.g. every test that includes test_{service_name}
     for item in items:
         for service in selected_services:

@@ -5,9 +5,19 @@ on:
   pull_request:
     branches:
       - main
+  workflow_dispatch:
+    inputs:
+      selected-services:
+        type: string
+        required: false
+        default: 'all'
+        description: 'enter a list of services (comma separated), that will be used to filter for tests'
   push:
     branches:
       - main
+permissions:
+  contents: write
+
 jobs:
   run-moto-tests:
     runs-on: ubuntu-latest
@@ -48,7 +58,7 @@ jobs:
            LOCALSTACK_API_KEY: ${{ secrets.LOCALSTACK_API_KEY }}
         run: |
           source .venv/bin/activate
-          python -m pytest --durations=10 --timeout=300 --capture=no --junitxml=target/reports/pytest.xml moto/tests --tb=line
+          python -m pytest --durations=10 --services ${{ inputs.selected-services | 'all' }} --timeout=300 --capture=no --junitxml=target/reports/pytest.xml moto/tests --tb=line
       - name: Archive Test Result
         if: always()
         uses: actions/upload-artifact@v3
@@ -66,3 +76,10 @@ jobs:
         with:
           junit_files: target/reports/*.xml
           check_name: Moto Integration Tests against LocalStack Results
+      - name: Prevent Workflows from getting Stale
+        if: always()
+        uses: gautamkrishnar/keepalive-workflow@v1
+        with:
+             #this message should prevent automatic triggering of workflows
+             #see https://docs.github.com/en/actions/managing-workflow-runs/skipping-workflow-runs
+            commit_message: "[skip ci] Automated commit by Keepalive Workflow to keep the repository active"
