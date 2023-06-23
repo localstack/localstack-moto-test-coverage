@@ -58,7 +58,7 @@ jobs:
            LOCALSTACK_API_KEY: ${{ secrets.LOCALSTACK_API_KEY }}
         run: |
           source .venv/bin/activate
-          python -m pytest --durations=10 --services ${{ inputs.selected-services || 'all' }} --timeout=300 --capture=no --junitxml=target/reports/pytest.xml moto/tests --tb=line
+          python -m pytest --durations=10 --services=${{ inputs.selected-services || 'all' }} --timeout=300 --capture=no --junitxml=target/reports/pytest.xml moto/tests --tb=line
       - name: Archive Test Result
         if: always()
         uses: actions/upload-artifact@v3
