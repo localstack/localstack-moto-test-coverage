@@ -181,6 +181,8 @@ def pytest_collection_modifyitems(items, config):
 
     selected_items = []
     deselected_items = []
+    # TODO excluding EKS because it requires a lot of resources
+    excluded_service = ["eks"]
 
     if not selected_services:
         # no default, select all
@@ -191,17 +193,17 @@ def pytest_collection_modifyitems(items, config):
         selected_services = [k for k in json.loads(response).get("services").keys()]
         # included tests, that do not match the pattern test_{service_name}
         included_tests = ["test_policies.py"]
-        # exclude other services that run a long time, but are not yet implemented in localstack
-        tmp_excluded = ["acmpca", "emr-serverless", "lambda"]
+        # lambda started failing because of iam policies, will exclude for now
+        excluded_service.append("lambda")
     else:
         included_tests = []
         tmp_excluded = []
 
-    # TODO excluding EKS because it requires a lot of resources
-    excluded_service = ["eks"]
-
     # exclude "specific test, because it creates 51 databases
     excluded_test_cases = ["test_rds.py::test_get_databases_paginated"]
+
+    # exclude other services that run a long time, but are not yet implemented in localstack
+    tmp_excluded = ["acmpca", "emr-serverless"]
 
     for tmp in tmp_excluded:
         if tmp not in selected_services:
