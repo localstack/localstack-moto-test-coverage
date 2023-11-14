@@ -32,9 +32,8 @@ def default_localstack_client_config_fixture() -> Iterator[None]:
         config: Config = kwargs.get("config")
         max_retry_config = Config(retries={"max_attempts": 1, "total_max_attempts": 2})
         if config:
-            config.merge(max_retry_config)
-        else:
-            kwargs["config"] = max_retry_config
+            max_retry_config = config.merge(max_retry_config)
+        kwargs["config"] = max_retry_config
         return org(*args, **kwargs)
 
     with patch("boto3.client", side_effect=localstack_client):
@@ -66,15 +65,11 @@ def default_cleanup_localstack_resources():
     """
     Fixture to cleanup localstack resources after each test case run
     We do not know which interservice communication happened, so we delete all resources, by sending a request to
-    the endpoint /_localstack/pods/state/reset
+    the endpoint /_localstack/state/reset
     """
     yield
-    payload = {
-        "persistence": True
-    }  # defining no services means all services will be cleared (we don't know which interservice communication tests trigger)
-    headers = {"content-type": "application/json"}
-    url = "http://localhost:4566/_localstack/pods/state/reset"
-    requests.delete(url, json=payload, headers=headers, timeout=90)
+    url = "http://localhost:4566/_localstack/state/reset"
+    requests.post(url, timeout=90)
 
 
 @pytest.fixture(scope="function", autouse=True)
@@ -240,7 +235,7 @@ def pytest_collection_modifyitems(items, config):
                 selected_items.append(item)
             elif any([x in test_class_name for x in included_tests]):
                 selected_items.append(item)
-            elif "test_ec2" == test_package_name:
+            elif "test_ec2" == test_package_name and service == "ec2":
                 # ec2 does not follow the conventions, some testclasses have only an empty test
                 if any([x in item._nodeid for x in excluded_ec2_tests]):
                     deselected_items.append(item)
