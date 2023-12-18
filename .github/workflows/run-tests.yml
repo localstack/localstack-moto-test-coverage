@@ -51,9 +51,9 @@ jobs:
           source .venv/bin/activate
           pip install localstack
           docker pull localstack/localstack-pro     # Make sure to pull the latest version of the image
-          # localstack extensions init
-          # localstack extensions dev enable ./collect-raw-metric-data-extension
-          DEBUG=1 DISABLE_EVENTS=1 localstack start -d
+          localstack extensions init
+          localstack extensions dev enable ./collect-raw-metric-data-extension
+          DEBUG=1 DISABLE_EVENTS=1 DNS_ADDRESS=127.0.0.1 EXTENSION_DEV_MODE=1 localstack start -d
           echo "Waiting for LocalStack startup..."
           localstack wait -t 30
           echo "Startup complete"
