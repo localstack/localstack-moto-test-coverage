@@ -50,7 +50,7 @@ jobs:
         run: |
           source .venv/bin/activate
           pip install localstack
-          docker pull localstack/localstack-pro     # Make sure to pull the latest version of the image
+          docker pull localstack/localstack-pro:3.0     # Make sure to pull the latest version of the image
           localstack extensions init
           localstack extensions dev enable ./collect-raw-metric-data-extension
       - name: Run Moto Integration Tests against LocalStack
@@ -65,11 +65,6 @@ jobs:
         with:
           name: test-metrics
           path: target/reports
-      - name: Logout LocalStack
-        if: always()
-        run: |
-          source .venv/bin/activate
-          localstack logout
       - name: Publish Test Results
         uses: EnricoMi/publish-unit-test-result-action@v2
         if: always()
