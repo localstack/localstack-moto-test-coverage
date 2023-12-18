@@ -119,7 +119,7 @@ def _startup_localstack():
         _localstack_health_check()
     except:
         os.system(
-            "DNS_ADDRESS=127.0.0.1 DEBUG=1 DISABLE_EVENTS=1 LOCALSTACK_API_KEY=$LOCALSTACK_API_KEY localstack start"
+            "DEBUG=1 DISABLE_EVENTS=1 LOCALSTACK_API_KEY=$LOCALSTACK_API_KEY localstack start -d"
         )
 
         _localstack_health_check()
