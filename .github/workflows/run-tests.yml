@@ -53,6 +53,10 @@ jobs:
           docker pull localstack/localstack-pro     # Make sure to pull the latest version of the image
           # localstack extensions init
           # localstack extensions dev enable ./collect-raw-metric-data-extension
+          DEBUG=1 DISABLE_EVENTS=1 localstack start -d
+          echo "Waiting for LocalStack startup..."
+          localstack wait -t 30
+          echo "Startup complete"
       - name: Run Moto Integration Tests against LocalStack
         env:
            LOCALSTACK_API_KEY: ${{ secrets.TEST_LOCALSTACK_API_KEY }}
@@ -71,6 +75,11 @@ jobs:
         with:
           junit_files: target/reports/*.xml
           check_name: Moto Integration Tests against LocalStack Results
+      - name: LocalStack Logs
+        if: always()
+        run:
+          source .venv/bin/activate
+          localstack logs
       - name: Prevent Workflows from getting Stale
         if: always()
         uses: gautamkrishnar/keepalive-workflow@v1
