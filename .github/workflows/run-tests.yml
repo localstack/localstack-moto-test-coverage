@@ -50,7 +50,7 @@ jobs:
         run: |
           source .venv/bin/activate
           pip install localstack
-          docker pull localstack/localstack-pro:3.0     # Make sure to pull the latest version of the image
+          docker pull localstack/localstack-pro     # Make sure to pull the latest version of the image
           localstack extensions init
           localstack extensions dev enable ./collect-raw-metric-data-extension
       - name: Run Moto Integration Tests against LocalStack
