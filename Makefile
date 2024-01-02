@@ -38,7 +38,6 @@ install-dependencies: venv
 
 install: venv install-dependencies init-precommit update-moto init-extension
 	$(VENV_RUN); $(PIP_CMD) install pytest requests
-	$(VENV_RUN); $(PIP_CMD) install pytest requests
 
 run-tests:
 	cp conftest.py moto/tests/
