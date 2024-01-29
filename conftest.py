@@ -13,7 +13,7 @@ from requests.adapters import HTTPAdapter, Retry
 from tests import DEFAULT_ACCOUNT_ID
 
 from moto import settings
-from moto.core.models import BaseMockAWS
+from moto.core.models import MockAWS
 
 BASE_PATH = os.path.join(os.path.dirname(__file__), "../../target/reports")
 
@@ -47,13 +47,13 @@ def default_localstack_client_fixture() -> Iterator[None]:
     This is required, because some tests explicelty check the returned arn, and by default LocalStack will assume ID 00000000
     """
 
-    def localstack_mock_env_variables(self, org=BaseMockAWS.mock_env_variables):
+    def localstack_mock_env_variables(self, org=MockAWS._mock_env_variables):
         # patch the access key id to use the same one in LocalStack
-        self.FAKE_KEYS["AWS_ACCESS_KEY_ID"] = DEFAULT_ACCOUNT_ID
+        self._fake_creds["AWS_ACCESS_KEY_ID"] = DEFAULT_ACCOUNT_ID
         org(self)
 
     with patch(
-        "moto.core.models.BaseMockAWS.mock_env_variables",
+        "moto.core.models.MockAWS._mock_env_variables",
         autospec=True,
         side_effect=localstack_mock_env_variables,
     ):
