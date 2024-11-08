@@ -65,7 +65,7 @@ jobs:
           python -m pytest --durations=10 --services=${{ inputs.selected-services || 'all' }} --timeout=300 --capture=no --junitxml=target/reports/pytest.xml moto/tests --tb=line
       - name: Archive Test Result
         if: always()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: test-metrics
           path: target/reports
