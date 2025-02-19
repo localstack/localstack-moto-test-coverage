@@ -46,7 +46,7 @@ jobs:
           cd collect-raw-metric-data-extension && make install
       - name: Setup LocalStack
         env:
-          LOCALSTACK_API_KEY: ${{ secrets.TEST_LOCALSTACK_API_KEY }}
+          LOCALSTACK_AUTH_TOKEN: ${{ secrets.TEST_LOCALSTACK_AUTH_TOKEN }}
         run: |
           source .venv/bin/activate
           pip install localstack
@@ -59,7 +59,7 @@ jobs:
           echo "Startup complete"
       - name: Run Moto Integration Tests against LocalStack
         env:
-           LOCALSTACK_API_KEY: ${{ secrets.TEST_LOCALSTACK_API_KEY }}
+           LOCALSTACK_AUTH_TOKEN: ${{ secrets.TEST_LOCALSTACK_AUTH_TOKEN }}
         run: |
           source .venv/bin/activate
           python -m pytest --durations=10 --services=${{ inputs.selected-services || 'all' }} --timeout=300 --capture=no --junitxml=target/reports/pytest.xml moto/tests --tb=line
