@@ -80,10 +80,3 @@ jobs:
         run:
           source .venv/bin/activate
           localstack logs
-      - name: Prevent Workflows from getting Stale
-        if: always()
-        uses: gautamkrishnar/keepalive-workflow@v1
-        with:
-             #this message should prevent automatic triggering of workflows
-             #see https://docs.github.com/en/actions/managing-workflow-runs/skipping-workflow-runs
-            commit_message: "[skip ci] Automated commit by Keepalive Workflow to keep the repository active"
